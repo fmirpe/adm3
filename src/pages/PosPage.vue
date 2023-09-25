@@ -153,6 +153,7 @@
                   fill-mask="0"
                   reverse-fill-mask
                   dense
+                  :readonly="enablepaga"
                 />
               </div>
             </div>
@@ -176,6 +177,7 @@
                     { label: 'Contado', value: 'Contado' },
                     { label: 'Crédito', value: 'Credito' },
                   ]"
+                  @update:model-value="actualizarTipoventa"
                 />
               </div>
             </div>
@@ -235,6 +237,8 @@ import { getStocks, updateStock } from "src/api/stock";
 import { getCustomers } from "src/api/customers";
 import { createSale, createSaleDetail } from "src/api/pos";
 
+import { crearVenta } from "src/controllers/pos";
+
 const $q = useQuasar();
 
 const router = useRouter();
@@ -251,6 +255,7 @@ const formatterPeso = new Intl.NumberFormat("es-CO", {
 });
 
 const tipoventa = ref(["Contado", "Credito"]);
+const enablepaga = ref(false);
 
 const venta = ref({
   subtotal: 0,
@@ -329,6 +334,15 @@ const valCantidad = ref([
   (val) => (val > 0 && val < 100) || "Please type a real age",
 ]);
 
+function actualizarTipoventa(value, evt) {
+  console.log(value);
+  console.log(evt);
+  if (value == "Credito") {
+    venta.value.paga = venta.value.total;
+    enablepaga.value = true;
+  }
+}
+
 function filterFn(val, update, abort) {
   update(() => {
     const needle = val.toLowerCase();
@@ -347,7 +361,7 @@ function filterFnCus(val, update, abort) {
   });
 }
 
-function handleFinish() {
+async function handleFinish() {
   var validado = false;
   console.debug(venta.value);
   console.debug(detalleventa.value);
@@ -362,7 +376,7 @@ function handleFinish() {
       });
     }
     if (validado) {
-      var obj = {
+      var ventanueva = {
         sale_type: venta.value.tipoventa,
         id_customer:
           venta.value.cliente == null
@@ -373,44 +387,33 @@ function handleFinish() {
         total: venta.value.total,
         status: true,
       };
-      createSale(obj).then(async (response) => {
-        console.log(response.data);
-        var ventanueva = response.data;
-        for (const item of detalleventa.value) {
-          var obj = {
-            id_sales: ventanueva.id,
-            id_product: item.id_product,
-            id_location: item.id_location,
-            price: item.precio,
-            quantity: item.venta,
-            subtotal: item.subtotal,
-          };
-          var resp = (await createSaleDetail(obj)).data;
-          console.log(resp);
-          if (resp) {
-            var objst = {
-              quantity: item.cantidad - item.venta,
-              id_product: item.id_product,
-              id_location: item.id_location,
-              id: item.id,
-            };
-            var respstock = (await updateStock(objst.id, objst)).data;
-            console.log(respstock);
-          }
-        }
-        venta.value = {
-          subtotal: 0,
-          total: 0,
-          paga: 0,
-          vuelto: 0,
-          cliente: null,
-          tipoventa: "Contado",
+      var detalleventanueva = [];
+      for (const item of detalleventa.value) {
+        var obj = {
+          id_sales: ventanueva.id,
+          id_product: item.id_product,
+          id_location: item.id_location,
+          price: item.precio,
+          quantity: item.venta,
+          subtotal: item.subtotal,
         };
-        detalleventa.value = [];
-        $q.notify({
-          type: "positive",
-          message: "Venta finalizada correctamente",
-        });
+        detalleventanueva.push(obj);
+      }
+
+      var respuesta = await crearVenta(ventanueva, detalleventanueva);
+
+      venta.value = {
+        subtotal: 0,
+        total: 0,
+        paga: 0,
+        vuelto: 0,
+        cliente: null,
+        tipoventa: "Contado",
+      };
+      detalleventa.value = [];
+      $q.notify({
+        type: respuesta.type,
+        message: respuesta.message,
       });
     }
   } else {
@@ -451,6 +454,9 @@ watch(detalleventa.value, (newvalue, oldvalue) => {
     venta.value.subtotal += row.subtotal;
   });
   venta.value.total = venta.value.subtotal;
+  if (venta.value.tipoventa == "Credito") {
+    venta.value.paga = venta.value.total;
+  }
 });
 
 function updateModel(value) {
@@ -484,19 +490,21 @@ function loadData() {
   getStocks("", "id_product,id_location").then((response) => {
     var ori = response.data.items;
     for (const iterator of ori) {
-      var obj = {
-        id: iterator.id,
-        sku: iterator.expand.id_product.sku,
-        nombreproducto: iterator.expand.id_product.name,
-        descripcionproducto: iterator.expand.id_product.description,
-        cantidad: iterator.quantity,
-        nombreubicacion: iterator.expand.id_location.name,
-        marca: iterator.expand.id_product.brand.join(" | "),
-        precio: iterator.expand.id_product.price_sales,
-        id_product: iterator.id_product,
-        id_location: iterator.id_location,
-      };
-      productosori.value.push(obj);
+      if (iterator.quantity > 0) {
+        var obj = {
+          id: iterator.id,
+          sku: iterator.expand.id_product.sku,
+          nombreproducto: iterator.expand.id_product.name,
+          descripcionproducto: iterator.expand.id_product.description,
+          cantidad: iterator.quantity,
+          nombreubicacion: iterator.expand.id_location.name,
+          marca: iterator.expand.id_product.brand.join(" | "),
+          precio: iterator.expand.id_product.price_sales,
+          id_product: iterator.id_product,
+          id_location: iterator.id_location,
+        };
+        productosori.value.push(obj);
+      }
     }
     productos.value = productosori.value;
   });

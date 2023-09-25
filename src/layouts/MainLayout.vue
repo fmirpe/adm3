@@ -12,7 +12,7 @@
 
         <q-toolbar-title>
           <q-avatar>
-            <img :src="urlStore" />
+            <img :src="urlStore" @click="home()" />
           </q-avatar>
           {{ tituloTienda }}
         </q-toolbar-title>
@@ -176,6 +176,10 @@ const links1 = ref([
 
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
+}
+
+function home() {
+  router.push("/");
 }
 
 function logout() {

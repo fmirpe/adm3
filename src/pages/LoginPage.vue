@@ -10,10 +10,10 @@
               class="text-h4 text-uppercase text-white fredoka"
               style="min-width: 220px"
             >
-              Welcome!
+              Bienvenido!
             </div>
             <div class="text-white q-my-sm text-subtitle1">
-              Please sign in to your account to get started!
+              Ingrese su usuario para iniciar!
             </div>
           </div>
         </div>
@@ -27,7 +27,7 @@
               style="text-decoration: none"
               to="/"
             >
-              System Name
+              POS Adm3 v1.0
             </router-link>
           </div>
         </div>
@@ -39,7 +39,7 @@
                   <div
                     class="text-h4 text-uppercase q-my-none text-weight-bold text-primary fredoka"
                   >
-                    Login
+                    Inicio de sesión
                   </div>
                 </div>
               </div>
@@ -58,16 +58,16 @@
                   <q-btn
                     class="full-width fredoka"
                     color="primary"
-                    label="Login"
+                    label="Inicio"
                     rounded
                     type="submit"
                   ></q-btn>
 
                   <div class="q-mt-lg">
                     <div class="q-mt-sm">
-                      Don't have an account yet?
+                      No tiene cuenta?
                       <router-link class="text-primary" to="/register"
-                        >Register</router-link
+                        >Registrar</router-link
                       >
                     </div>
                   </div>
