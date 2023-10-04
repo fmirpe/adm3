@@ -1,9 +1,15 @@
 import { api } from "src/boot/axios";
 
-export function getSales(filter = "", expand = "") {
-  var strurl = `/collections/sales/records?sort=-created`;
+export function getSales(
+  filter = "",
+  expand = "",
+  skipTotal = false,
+  page = 1,
+  perPage = 30
+) {
+  var strurl = `/collections/sales/records?sort=-created&page=${page}&perPage=${perPage}&skipTotal=${skipTotal}`;
   if (filter != "") {
-    strurl += `&filter=(${encodeURIComponent(filter)})`;
+    strurl += `&filter=${encodeURIComponent(filter)}`;
   }
   if (expand != "") {
     strurl += `&expand=${encodeURIComponent(expand)}`;

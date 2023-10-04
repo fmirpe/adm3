@@ -1,6 +1,12 @@
 <template>
   <div class="q-pa-md">
-    <q-table title="Proveedores" :rows="datos" :columns="columns" row-key="id">
+    <q-table
+      title="Proveedores"
+      :rows="datos"
+      :columns="columns"
+      :visible-columns="viscolumns"
+      row-key="id"
+    >
       <template v-slot:top>
         <div class="text-h6">Proveedores</div>
         <q-space />
@@ -165,7 +171,14 @@ const modal = ref(false);
 const modalTitle = ref("");
 const modalOper = ref("N");
 const datos = ref([]);
-const categorias = ref([]);
+const viscolumns = ref([
+  "identification",
+  "name",
+  "telephone",
+  "status",
+  "contact",
+  "actions",
+]);
 const columns = [
   {
     name: "id",

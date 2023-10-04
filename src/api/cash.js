@@ -1,7 +1,7 @@
 import { api } from "src/boot/axios";
 
 export function getCashs() {
-  return api.get(`/collections/cash/records`);
+  return api.get(`/collections/cash/records?sort=-created&expand=user`);
 }
 
 export function getCash(id) {

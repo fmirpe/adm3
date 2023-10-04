@@ -1,6 +1,12 @@
 <template>
   <div class="q-pa-md">
-    <q-table title="Categorias" :rows="datos" :columns="columns" row-key="id">
+    <q-table
+      title="Categorias"
+      :rows="datos"
+      :columns="columns"
+      row-key="id"
+      :visible-columns="viscolumns"
+    >
       <template v-slot:top>
         <div class="text-h6">Categorias</div>
         <q-space />
@@ -86,7 +92,7 @@ import {
   deleteCategory,
   getCategory,
   updateCategory,
-} from "../api/categories";
+} from "src/api/categories";
 
 const router = useRouter();
 const $q = useQuasar();
@@ -96,6 +102,7 @@ const modal = ref(false);
 const modalTitle = ref("");
 const modalOper = ref("N");
 const datos = ref([]);
+const viscolumns = ref(["name", "actions"]);
 const columns = [
   {
     name: "id",
@@ -125,7 +132,6 @@ const formData = ref({
 
 function loadData() {
   getCategories().then((response) => {
-    console.log(response.data);
     datos.value = response.data.items;
     $q.loading.hide();
   });
@@ -170,7 +176,6 @@ function handleDelete(id) {
 }
 
 function handleEdit(id) {
-  console.log(id);
   getCategory(id).then((response) => {
     console.log(response.data);
     formData.value = response.data;

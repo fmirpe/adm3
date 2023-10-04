@@ -61,8 +61,8 @@
               </q-select>
             </div>
             <div class="col-6">
-              <q-btn color="red" @click="handleCancel()" rounded
-                >Cancelar venta</q-btn
+              <q-btn no-caps color="red" @click="handleCancel()" rounded
+                >Cancelar Venta</q-btn
               >
             </div>
           </div>
@@ -70,7 +70,7 @@
       </q-card>
     </div>
     <div class="row q-pt-lg">
-      <div class="col-8 q-pr-lg">
+      <div class="col-9 q-pr-lg">
         <q-table
           title="Productos"
           :rows="detalleventa"
@@ -126,8 +126,8 @@
           </template>
         </q-table>
       </div>
-      <div class="col-4 full-height">
-        <q-card style="height: 60vh">
+      <div class="col-3 full-height">
+        <q-card style="height: 50vh">
           <q-card-section>
             <div class="row q-pa-sm">
               <div class="col-6 text-subtitle1">SubTotal</div>
@@ -141,7 +141,7 @@
                 {{ formatterPeso.format(venta.total) }}
               </div>
             </div>
-            <div class="row q-pa-sm">
+            <!-- <div class="row q-pa-sm">
               <div class="col-6 text-subtitle1">Paga con</div>
               <div class="col-6 text-subtitle1 text-right">
                 <q-input
@@ -156,17 +156,18 @@
                   :readonly="enablepaga"
                 />
               </div>
-            </div>
-            <div class="row q-pa-sm">
+            </div> -->
+            <!-- <div class="row q-pa-sm">
               <div class="col-6 text-subtitle1">Vuelto</div>
               <div class="col-6 text-subtitle1 text-right text-blue">
                 {{ formatterPeso.format(venta.vuelto) }}
               </div>
-            </div>
+            </div> -->
             <div class="row q-pa-sm">
               <div class="col-6 text-subtitle1">Tipo de venta</div>
               <div class="col-6">
                 <q-btn-toggle
+                  rounded
                   v-model="venta.tipoventa"
                   spread
                   no-caps
@@ -191,7 +192,6 @@
                   :options="customers"
                   @filter="filterFnCus"
                   style="width: 100%"
-                  behavior="menu"
                   :option-value="(opt) => opt.id"
                   :option-label="(opt) => opt.name"
                 >
@@ -205,13 +205,14 @@
                 </q-select>
               </div>
             </div>
-            <div class="row q-pa-xl text-center">
+            <div class="row q-pt-md text-center">
               <div class="col-12">
                 <q-btn
-                  color="primary"
+                  no-caps
+                  rounded
+                  color="positive"
                   icon="price_check"
-                  label="Finalizar venta"
-                  style="width: 100%"
+                  label="Completar Venta"
                   @click="handleFinish()"
                 />
               </div>
@@ -221,40 +222,98 @@
       </div>
     </div>
   </div>
+  <q-dialog v-model="toolbar" persistent>
+    <q-card style="width: 400px">
+      <q-toolbar class="bg-blue">
+        <!-- <q-avatar>
+            <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg">
+          </q-avatar> -->
+
+        <q-toolbar-title
+          ><span class="text-weight-bold">Completar</span>
+          Venta</q-toolbar-title
+        >
+
+        <q-btn flat round dense icon="close" @click="closeCompleted()" />
+      </q-toolbar>
+
+      <q-card-section>
+        <div class="row">
+          <div class="col-12">
+            <q-select
+              label="Como paga?"
+              use-chips
+              v-model="venta.tipopago"
+              :options="tipopago"
+              option-value="id"
+              option-label="name"
+              map-options
+              @update:model-value="updateModelTipoPago"
+            />
+          </div>
+        </div>
+        <div class="row q-pt-md">
+          <div class="col-6 text-subtitle1">Cuanto paga</div>
+          <div class="col-6 text-subtitle1 text-right">
+            <q-input
+              v-model.number="venta.paga"
+              type="number"
+              style="width: 100%"
+              input-class="text-right"
+              mask="#.##"
+              fill-mask="0"
+              reverse-fill-mask
+              dense
+            />
+          </div>
+        </div>
+        <div class="row q-pt-md">
+          <div class="col-6 text-subtitle1">Vuelto</div>
+          <div class="col-6 text-subtitle1 text-right text-blue">
+            {{ formatterPeso.format(venta.vuelto) }}
+          </div>
+        </div>
+        <div class="row q-pt-md">
+          <div class="col-6 text-subtitle1">Referencia</div>
+          <div class="col-6 text-subtitle1 text-right">
+            <q-input
+              v-model.number="venta.referencia"
+              style="width: 100%"
+              dense
+            />
+          </div>
+        </div>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn color="positive" icon="check" no-caps>Aceptar</q-btn>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 <script setup>
-import { ref, reactive, onMounted, onBeforeMount, watch } from "vue";
+import { ref, onBeforeMount, watch } from "vue";
 import { useQuasar } from "quasar";
-import { useRouter } from "vue-router";
-import {
-  getLocations,
-  createLocation,
-  deleteLocation,
-  getLocation,
-  updateLocation,
-} from "src/api/locations";
-import { getStocks, updateStock } from "src/api/stock";
-import { getCustomers } from "src/api/customers";
-import { createSale, createSaleDetail } from "src/api/pos";
-
 import { crearVenta } from "src/controllers/pos";
+import { buscarProductosStock } from "src/controllers/stock";
+import { buscarClientesVenta } from "src/controllers/customers";
+import { buscarTipoPago } from "src/controllers/paymenttype";
 
 const $q = useQuasar();
 
-const router = useRouter();
 const productos = ref([]);
 const productosori = ref([]);
 const producto = ref({});
 const customers = ref([]);
 const customersori = ref([]);
-
+const toolbar = ref(false);
 const formatterPeso = new Intl.NumberFormat("es-CO", {
   style: "currency",
   currency: "COP",
   minimumFractionDigits: 0,
 });
 
-const tipoventa = ref(["Contado", "Credito"]);
+const tipopago = ref([]);
+
 const enablepaga = ref(false);
 
 const venta = ref({
@@ -264,6 +323,18 @@ const venta = ref({
   vuelto: 0,
   cliente: null,
   tipoventa: "Contado",
+  tipopago: null,
+  referencia: null,
+});
+const ventaori = ref({
+  subtotal: 0,
+  total: 0,
+  paga: 0,
+  vuelto: 0,
+  cliente: null,
+  tipoventa: "Contado",
+  tipopago: null,
+  referencia: null,
 });
 const detalleventa = ref([]);
 
@@ -329,14 +400,18 @@ const columndetalle = ref([
   },
 ]);
 
+function closeCompleted() {
+  venta.value.tipopago = null;
+  venta.value.paga = 0;
+  toolbar.value = false;
+}
+
 const valCantidad = ref([
   (val) => (val !== null && val !== "") || "Please type your age",
   (val) => (val > 0 && val < 100) || "Please type a real age",
 ]);
 
 function actualizarTipoventa(value, evt) {
-  console.log(value);
-  console.log(evt);
   if (value == "Credito") {
     venta.value.paga = venta.value.total;
     enablepaga.value = true;
@@ -347,7 +422,9 @@ function filterFn(val, update, abort) {
   update(() => {
     const needle = val.toLowerCase();
     productos.value = productosori.value.filter(
-      (v) => v.nombreproducto.toLowerCase().indexOf(needle) > -1
+      (v) =>
+        v.nombreproducto.toLowerCase().indexOf(needle) > -1 ||
+        v.sku.toLowerCase().indexOf(needle) > -1
     );
   });
 }
@@ -366,74 +443,70 @@ async function handleFinish() {
   console.debug(venta.value);
   console.debug(detalleventa.value);
 
-  if (detalleventa.value.length > 0) {
-    if (venta.value.vuelto >= 0) {
-      validado = true;
-    } else {
-      $q.notify({
-        type: "warning",
-        message: "El valor pagado en inferior a la venta",
-      });
-    }
-    if (validado) {
-      var ventanueva = {
-        sale_type: venta.value.tipoventa,
-        id_customer:
-          venta.value.cliente == null
-            ? "eu6deuudvv8ax75"
-            : venta.value.cliente.id,
-        discount: 0,
-        subtotal: venta.value.subtotal,
-        total: venta.value.total,
-        status: true,
-      };
-      var detalleventanueva = [];
-      for (const item of detalleventa.value) {
-        var obj = {
-          id_sales: ventanueva.id,
-          id_product: item.id_product,
-          id_location: item.id_location,
-          price: item.precio,
-          quantity: item.venta,
-          subtotal: item.subtotal,
-        };
-        detalleventanueva.push(obj);
-      }
+  toolbar.value = true;
 
-      var respuesta = await crearVenta(ventanueva, detalleventanueva);
+  // if (detalleventa.value.length > 0) {
+  //   if (venta.value.vuelto >= 0) {
+  //     validado = true;
+  //   } else {
+  //     $q.notify({
+  //       type: "warning",
+  //       message: "El valor pagado en inferior a la venta",
+  //     });
+  //   }
+  //   if (validado) {
+  //     var ventanueva = {
+  //       sale_type: venta.value.tipoventa,
+  //       id_customer:
+  //         venta.value.cliente == null
+  //           ? "eu6deuudvv8ax75"
+  //           : venta.value.cliente.id,
+  //       discount: 0,
+  //       subtotal: venta.value.subtotal,
+  //       total: venta.value.total,
+  //       status: true,
+  //     };
+  //     var detalleventanueva = [];
+  //     for (const item of detalleventa.value) {
+  //       var obj = {
+  //         id_sales: ventanueva.id,
+  //         id_product: item.id_product,
+  //         id_location: item.id_location,
+  //         price: item.precio,
+  //         quantity: item.venta,
+  //         subtotal: item.subtotal,
+  //       };
+  //       detalleventanueva.push(obj);
+  //     }
 
-      venta.value = {
-        subtotal: 0,
-        total: 0,
-        paga: 0,
-        vuelto: 0,
-        cliente: null,
-        tipoventa: "Contado",
-      };
-      detalleventa.value = [];
-      $q.notify({
-        type: respuesta.type,
-        message: respuesta.message,
-      });
-    }
-  } else {
-    $q.notify({
-      type: "warning",
-      message: "No hay detalle de venta",
-    });
-  }
+  //     var respuesta = await crearVenta(ventanueva, detalleventanueva);
+
+  //     venta.value = {
+  //       subtotal: 0,
+  //       total: 0,
+  //       paga: 0,
+  //       vuelto: 0,
+  //       cliente: null,
+  //       tipoventa: "Contado",
+  //     };
+  //     detalleventa.value = [];
+  //     $q.notify({
+  //       type: respuesta.type,
+  //       message: respuesta.message,
+  //     });
+  //   }
+  // } else {
+  //   $q.notify({
+  //     type: "warning",
+  //     message: "No hay detalle de venta",
+  //   });
+  // }
 }
 
 function handleCancel() {
-  venta.value = {
-    subtotal: 0,
-    total: 0,
-    paga: 0,
-    vuelto: 0,
-    cliente: null,
-    tipoventa: "Contado",
-  };
+  venta.value = Object.assign({}, ventaori.value);
   detalleventa.value = [];
+  enablepaga.value = false;
 }
 
 function handleDelete(id) {
@@ -448,6 +521,7 @@ watch(venta.value, (newvalue, oldvalue) => {
 });
 
 watch(detalleventa.value, (newvalue, oldvalue) => {
+  console.log(detalleventa.value);
   venta.value.subtotal = 0;
   detalleventa.value.forEach((row, index) => {
     row.subtotal = row.venta * row.precio;
@@ -486,39 +560,44 @@ function updateModel(value) {
   producto.value = null;
 }
 
-function loadData() {
-  getStocks("", "id_product,id_location").then((response) => {
-    var ori = response.data.items;
-    for (const iterator of ori) {
-      if (iterator.quantity > 0) {
-        var obj = {
-          id: iterator.id,
-          sku: iterator.expand.id_product.sku,
-          nombreproducto: iterator.expand.id_product.name,
-          descripcionproducto: iterator.expand.id_product.description,
-          cantidad: iterator.quantity,
-          nombreubicacion: iterator.expand.id_location.name,
-          marca: iterator.expand.id_product.brand.join(" | "),
-          precio: iterator.expand.id_product.price_sales,
-          id_product: iterator.id_product,
-          id_location: iterator.id_location,
-        };
-        productosori.value.push(obj);
-      }
-    }
-    productos.value = productosori.value;
-  });
+function updateModelTipoPago(value) {
+  console.log(value);
 }
 
-function loadCustomer() {
-  getCustomers().then((response) => {
-    customers.value = response.data.items;
-    customersori.value = customers.value;
-  });
+async function loadData() {
+  var result = await buscarProductosStock();
+  var ori = result.data.items;
+  for (const iterator of ori) {
+    productosori.value.push({
+      id: iterator.id,
+      sku: iterator.expand.id_product.sku,
+      nombreproducto: iterator.expand.id_product.name,
+      descripcionproducto: iterator.expand.id_product.description,
+      cantidad: iterator.quantity,
+      nombreubicacion: iterator.expand.id_location.name,
+      marca: iterator.expand.id_product.brand.join(" | "),
+      precio: iterator.expand.id_product.price_sales,
+      id_product: iterator.id_product,
+      id_location: iterator.id_location,
+    });
+  }
+  productos.value = productosori.value;
+}
+
+async function loadCustomer() {
+  var result = await buscarClientesVenta();
+  customers.value = result.data.items;
+  customersori.value = customers.value;
+}
+
+async function loadPaymentType() {
+  var result = await buscarTipoPago();
+  tipopago.value = result.data.items;
 }
 
 onBeforeMount(() => {
   loadCustomer();
+  loadPaymentType();
   loadData();
 });
 </script>

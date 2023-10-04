@@ -28,18 +28,27 @@ export default boot(({ app, router }) => {
           "Access-Control-Allow-Origin": "*",
         };
       } else {
-        config.headers = {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-          "Access-Control-Allow-Origin": "*",
-        };
+        if (config.url.includes("store")) {
+          config.headers = {
+            Authorization: `Bearer ${token}`,
+            Accept: "multipart/form-data",
+            "Content-Type": "multipart/form-data",
+            "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+            "Access-Control-Allow-Origin": "*",
+          };
+        } else {
+          config.headers = {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
+            "Access-Control-Allow-Origin": "*",
+          };
+        }
       }
 
       return config;
     },
     function (error) {
-      console.log(error);
       return Promise.reject(error);
     }
   );
@@ -50,7 +59,6 @@ export default boot(({ app, router }) => {
       return response;
     },
     async function (error) {
-      console.log(error);
       const originalRequest = error.config;
       if (error.response.status === 403 && !originalRequest._retry) {
         router.push("/Login");

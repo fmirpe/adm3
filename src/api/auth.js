@@ -1,7 +1,7 @@
 import { api } from "../boot/axios";
 
 export function logIn(user, pass) {
-  return api.post("/collections/users/auth-with-password", {
+  return api.post("/collections/users/auth-with-password?expand=id_store", {
     identity: user,
     password: pass,
   });

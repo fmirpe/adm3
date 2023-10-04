@@ -1,31 +1,53 @@
 <template>
   <div class="q-pa-md">
-    <q-table title="Clientes" :rows="datos" :columns="columns" row-key="id">
+    <q-table
+      title="Clientes"
+      :rows="datos"
+      :columns="columns"
+      row-key="id"
+      :visible-columns="visculumns"
+      :filter="filter"
+    >
       <template v-slot:top>
         <div class="text-h6">Clientes</div>
         <q-space />
         <q-btn
           color="primary"
           icon="add"
-          size="sm"
+          size="md"
           dense
+          rounded
           @click="handleNew()"
         />
+        <q-input
+          borderless
+          dense
+          debounce="300"
+          v-model="filter"
+          placeholder="Buscar"
+          class="q-ml-xs"
+        >
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
       </template>
       <template v-slot:body-cell-actions="props">
         <q-td :props="props" class="q-gutter-sm">
           <q-btn
+            rounded
             icon="edit"
             color="info"
             dense
-            size="sm"
+            size="md"
             @click="handleEdit(props.row.id)"
           />
           <q-btn
+            rounded
             icon="delete"
             color="negative"
             dense
-            size="sm"
+            size="md"
             @click="handleDelete(props.row.id)"
           />
         </q-td>
@@ -138,24 +160,29 @@ import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { useRouter } from "vue-router";
 import {
-  getCustomers,
-  createCustomer,
-  deleteCustomer,
-  getCustomer,
-  updateCustomer,
-} from "src/api/customers";
-
-import { getCategories } from "src/api/categories";
+  crearCliente,
+  actualizarCliente,
+  buscarClientes,
+  buscarCliente,
+  borrarCliente,
+} from "src/controllers/customers";
 
 const router = useRouter();
 const $q = useQuasar();
-
+const filter = ref("");
 const myForm = ref(null);
 const modal = ref(false);
 const modalTitle = ref("");
 const modalOper = ref("N");
 const datos = ref([]);
-const categorias = ref([]);
+const visculumns = ref([
+  "identification",
+  "name",
+  "telephone",
+  "status",
+  "balance",
+  "actions",
+]);
 const columns = [
   {
     name: "id",
@@ -197,7 +224,8 @@ const columns = [
     field: "balance",
     label: "Saldo",
     sortable: true,
-    align: "left",
+    align: "right",
+    format: (val) => `${formatterPeso.format(val)}`,
   },
   {
     name: "actions",
@@ -206,6 +234,12 @@ const columns = [
     align: "right",
   },
 ];
+
+const formatterPeso = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  minimumFractionDigits: 0,
+});
 
 const formData = ref({
   identification: "",
@@ -221,11 +255,13 @@ function createValue(val, done) {
   done(val);
 }
 
-function loadData() {
-  getCustomers().then((response) => {
-    datos.value = response.data.items;
-    $q.loading.hide();
-  });
+async function loadData() {
+  var result = await buscarClientes();
+  if (result.type == "positive") {
+    datos.value = result.data.items;
+  }
+  $q.notify({ type: result.type, message: result.message });
+  $q.loading.hide();
 }
 
 function handleNew() {
@@ -258,49 +294,49 @@ function handleDelete(id) {
 
     persistent: true,
   })
-    .onOk(() => {
+    .onOk(async () => {
       console.log(">>>> OK");
       $q.loading.show();
-      deleteCustomer(id).then((response) => {
-        loadData();
-        $q.loading.hide();
-      });
+      var result = await borrarCliente(id);
+      $q.notify({ type: result.type, message: result.message });
+      loadData();
+      $q.loading.hide();
     })
     .onCancel(() => {
       console.log(">>>> Cancel");
-    })
-    .onDismiss(() => {
-      // console.log('I am triggered on both OK and Cancel')
     });
 }
 
-function handleEdit(id) {
-  getCustomer(id).then((response) => {
-    formData.value = response.data;
+async function handleEdit(id) {
+  var result = await buscarCliente(id);
+  if (result.type == "positive") {
+    formData.value = result.data;
     modalTitle.value = "Editar registro";
     modalOper.value = "E";
     modal.value = true;
-  });
+  }
 }
 
-function onSubmit() {
-  myForm.value.validate().then((success) => {
+async function onSubmit() {
+  myForm.value.validate().then(async (success) => {
     if (success) {
       $q.loading.show();
-      console.log(formData.value);
       if (modalOper.value == "N") {
-        createCustomer(formData.value).then((response) => {
-          modal.value = false;
-          $q.loading.hide();
-          loadData();
+        var result = await crearCliente(formData.value);
+        $q.notify({
+          type: result.type,
+          message: result.message,
         });
       } else {
-        updateCustomer(formData.value.id, formData.value).then((response) => {
-          modal.value = false;
-          $q.loading.hide();
-          loadData();
+        var result = await actualizarCliente(formData.value.id, formData.value);
+        $q.notify({
+          type: result.type,
+          message: result.message,
         });
       }
+      modal.value = false;
+      loadData();
+      $q.loading.hide();
     } else {
       $q.notify("Datos invalidos por favor verifique!");
     }

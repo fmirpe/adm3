@@ -32,7 +32,7 @@
             <q-tooltip>Notifications</q-tooltip>
           </q-btn>
 
-          <q-btn-dropdown :label="usuario.email" flat>
+          <q-btn-dropdown no-caps :label="usuario.email" flat>
             <div class="row no-wrap q-pa-md">
               <!-- <div class="column">
                 <div class="text-h6 q-mb-md">Settings</div>
@@ -123,7 +123,7 @@
                 class="GNL__drawer-footer-link"
                 href="javascript:void(0)"
                 aria-label="About"
-                >About Google</a
+                >About</a
               >
             </div>
           </div>
@@ -167,11 +167,13 @@ const tituloTienda = ref("");
 
 const links1 = ref([
   { icon: "point_of_sale", text: "POS", to: "/Pos" },
+  { icon: "fact_check", text: "Ventas", to: "/Sales" },
   { icon: "category", text: "Categorias", to: "/Categories" },
   { icon: "inventory", text: "Productos", to: "/Products" },
   { icon: "perm_contact_calendar", text: "Clientes", to: "/Customers" },
   { icon: "inventory_2", text: "Inventario", to: "/Locations" },
   { icon: "folder_shared", text: "Proveedores", to: "/Suppliers" },
+  { icon: "settings_suggest", text: "Configuración", to: "/Setting" },
 ]);
 
 function toggleLeftDrawer() {
@@ -190,7 +192,9 @@ onMounted(() => {
   tienda.value = store.currentStore;
   usuario.value = store.currentUser;
   if (usuario.value) {
+    console.log(tienda.value);
     urlStore.value = `${api.defaults.baseURL}/files/stores/${tienda.value.id}/${tienda.value.avatar}?token=${store.getToken}`;
+    console.log(urlStore.value);
     urlFoto.value = `${api.defaults.baseURL}/files/users/${usuario.value.id}/${usuario.value.avatar}?token=${store.getToken}`;
     tituloTienda.value = tienda.value.name;
   } else {

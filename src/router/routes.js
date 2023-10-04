@@ -24,6 +24,30 @@ const routes = [
   },
 
   {
+    path: "/Cash",
+    component: () => import("layouts/MainLayout.vue"),
+    children: [
+      {
+        path: "",
+        component: () => import("pages/CashPage.vue"),
+        meta: { requiresAuth: true },
+      },
+    ],
+  },
+
+  {
+    path: "/SalesToday",
+    component: () => import("layouts/MainLayout.vue"),
+    children: [
+      {
+        path: "",
+        component: () => import("pages/SalesTodayPage.vue"),
+        meta: { requiresAuth: true },
+      },
+    ],
+  },
+
+  {
     path: "/Categories",
     component: () => import("layouts/MainLayout.vue"),
     children: [
@@ -78,6 +102,30 @@ const routes = [
       {
         path: "",
         component: () => import("pages/SuppliersPage.vue"),
+        meta: { requiresAuth: true },
+      },
+    ],
+  },
+
+  {
+    path: "/Setting",
+    component: () => import("layouts/MainLayout.vue"),
+    children: [
+      {
+        path: "",
+        component: () => import("pages/StorePage.vue"),
+        meta: { requiresAuth: true },
+      },
+    ],
+  },
+
+  {
+    path: "/Sales",
+    component: () => import("layouts/MainLayout.vue"),
+    children: [
+      {
+        path: "",
+        component: () => import("pages/SalesPage.vue"),
         meta: { requiresAuth: true },
       },
     ],

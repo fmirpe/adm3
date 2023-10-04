@@ -3,7 +3,7 @@ import { api } from "src/boot/axios";
 export function getStocks(filter = "", expand = "") {
   var strurl = `/collections/stocks/records?sort=-created`;
   if (filter != "") {
-    strurl += `&filter=(${encodeURIComponent(filter)})`;
+    strurl += `&filter=${encodeURIComponent(filter)}`;
   }
   if (expand != "") {
     strurl += `&expand=${encodeURIComponent(expand)}`;

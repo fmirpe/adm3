@@ -44,17 +44,28 @@
                 </div>
               </div>
 
-              <q-form ref="form" class="q-gutter-md" @submit="submit">
-                <q-input v-model="user.email" label="Email" name="Email" />
+              <q-form
+                ref="form"
+                class="q-gutter-md"
+                @submit.prevent.stop="submit"
+              >
+                <q-input v-model="usuario.email" label="Email" name="Email" />
 
                 <q-input
-                  v-model="user.password"
-                  label="Password"
-                  name="password"
-                  type="password"
-                />
+                  v-model="usuario.password"
+                  label="Clave"
+                  :type="isPwd ? 'password' : 'text'"
+                >
+                  <template v-slot:append>
+                    <q-icon
+                      :name="isPwd ? 'visibility_off' : 'visibility'"
+                      class="cursor-pointer"
+                      @click="isPwd = !isPwd"
+                    />
+                  </template>
+                </q-input>
 
-                <div>
+                <div class="q-mt-md">
                   <q-btn
                     class="full-width fredoka"
                     color="primary"
@@ -81,52 +92,42 @@
   </q-card>
 </template>
 <script setup>
-import { ref, reactive, onBeforeMount } from "vue";
+import { ref, onBeforeMount } from "vue";
 import { useQuasar } from "quasar";
-import { logIn, getStore } from "../api/auth";
-import { useAuthStore } from "../stores/auth";
+import { inicionSesion } from "src/controllers/auth";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "src/stores/auth";
 
 const $q = useQuasar();
-
-const authStore = useAuthStore();
 const router = useRouter();
+const isPwd = ref(true);
+const form = ref(null);
+const authStore = useAuthStore();
 
-const user = reactive({
+const usuario = ref({
   email: null,
   password: null,
 });
 
-const form = ref(null);
-
-const submit = async () => {
+async function submit() {
   if (form.value.validate()) {
     $q.loading.show();
-    logIn(user.email, user.password)
-      .then(async (response) => {
-        var user = response.data.record;
-        var token = response.data.token;
-        authStore.loginUser(token, user);
-        var store = (await getStore(user.id_store)).data;
-        authStore.setStore(store);
-        $q.loading.hide();
-
-        $q.notify({
-          message: "Usuario validado correctamente!",
-          type: "positive",
-        });
-        router.push("/");
-      })
-      .catch((error) => {
-        $q.loading.hide();
-        console.log(error);
-        $q.notify({
-          message: "Error validando usuario/contraseña",
-          type: "warning",
-        });
-      });
+    var result = await inicionSesion(
+      usuario.value.email,
+      usuario.value.password
+    );
+    $q.notify({
+      message: result.message,
+      type: result.type,
+    });
+    if (result.type == "positive") {
+      $q.loading.hide();
+      router.push("/");
+    } else {
+      $q.loading.hide();
+    }
   }
-};
+}
 
 onBeforeMount(() => {
   authStore.clearUser();
